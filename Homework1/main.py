@@ -1,5 +1,8 @@
+import numpy as np
+import matplotlib.pyplot as plt
 
-
+import gradEs
+import hessEs
 
 dt = 0.1 # Time step size
 maxTime = 10   # total time of simulation
