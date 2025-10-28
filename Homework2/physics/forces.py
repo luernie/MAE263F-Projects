@@ -68,7 +68,8 @@ def objfun(q_old, u_old, dt, tol, maximum_iter,
            EI, EA, # elastic stiffness
            W, C, # external force
            deltaL,
-           free_index):
+           free_index,
+           P, Ploc, nodes):
 
   q_new = q_old.copy() # Guess solution
 
@@ -95,12 +96,20 @@ def objfun(q_old, u_old, dt, tol, maximum_iter,
     # Fv = - C @ ( q_new - q_old ) / dt
     # Jv = - C / dt
 
+    # Loading Force
+    Pnode = np.argmin(np.abs(nodes[:, 0] - Ploc)) # find min where P location is close to the node position
+    # print(nodes[:, 0] - Ploc)
+    # print(nodes[1,:])
+    # print(nodes[Pnode, 0] - Ploc)
+
     # Equations of motion
     f = F_inertia - F_elastic - Fv - W #TODO: Make sure these forces are calculated correctly
     J = J_inertia - J_elastic - Jv
+    f[Pnode*2+1] = f[Pnode*2+1] + P
 
     f_free = f[free_index]
     J_free = J[np.ix_(free_index, free_index)]
+    # f_free[Pnode] = f_free[Pnode] + P
 
     # Newton's update (all DOFs are FREE)
     dq_free = np.linalg.solve(J_free, f_free)

@@ -5,7 +5,7 @@ from physics.forces import getFb, getFs, objfun
 
 def run_simulation():
     # === Simulation parameters ===
-    nv = 11
+    nv = 50 #11
     ndof = 2 * nv
     midNode = nv // 2 + 1
     dt = 0.01
@@ -27,6 +27,7 @@ def run_simulation():
     # rho = rho_metal - rho_gl
 
     EI = Y * np.pi * (R0**4 - r0**4) / 12 # bending stiffness shelled sphere
+    print(EI)
     EA = Y * np.pi * (R0**2 - r0**2) # axial stiffness
     tol = EI / RodLength ** 2 * 1e-3 # tolerance number
 
@@ -57,18 +58,22 @@ def run_simulation():
     #     C[2*k, 2*k] = 6*np.pi*visc*R[k]
     #     C[2*k+1, 2*k+1] = 6*np.pi*visc*R[k]
 
-    # === Gravity === %TODO: Do I need to remove this??
+    # === Gravity ===
     g = np.array([0, -9.8])
     W = np.zeros(2 * nv)
-    for k in range(nv):
-        W[2*k:2*k+2] = 4/3 * np.pi * R[k]**3 * rho_metal * g
+    # for k in range(nv):
+    #     W[2*k:2*k+2] = 4/3 * np.pi * R[k]**3 * rho_metal * g
+
+    # === External Load === %TODO: Add in the P value, 
+    P = 20000 # Applied Force
+    Ploc = 0.75 # Location of the Force
 
     # === Initial Conditions ===
     q0 = nodes.flatten()
     u0 = np.zeros(2 * nv)
     all_DOFs = np.arange(ndof)
     # fixed_index = np.array([0, 1, 2, 3])
-    fixed_index = np.array([0, 1, 21]) # There is a pin on the first node and a roller on the last node
+    fixed_index = np.array([0, 1, nv*2-1]) # There is a pin on the first node and a roller on the last node
     free_index = np.setdiff1d(all_DOFs, fixed_index)
 
     Nsteps = round(totalTime / dt)
@@ -78,7 +83,7 @@ def run_simulation():
     mid_angle = np.zeros(Nsteps)
 
     for timeStep in range(1, Nsteps):
-        q_new, error = objfun(q0, u0, dt, tol, maximum_iter, m, mMat, EI, EA, W, C, deltaL, free_index)
+        q_new, error = objfun(q0, u0, dt, tol, maximum_iter, m, mMat, EI, EA, W, C, deltaL, free_index, P, Ploc, nodes)
         if error < 0:
             print("Could not converge.")
             break

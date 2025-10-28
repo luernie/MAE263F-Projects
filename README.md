@@ -25,3 +25,14 @@ deactivate
 
 ## ⚙️ Homework 1
 For now, please run Homework_1.ipynb, I am currently still finalizing the Python version of the homework code.
+
+
+## ⚙️ Homework 2
+homework2.py runs the main code which is essentially all within simulation
+
+To run code run the colloing commands:
+
+python -m venv venv
+venv\Scripts\activate         # on Windows
+pip install -r requirements.txt
+python main.py
