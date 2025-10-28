@@ -9,7 +9,7 @@ def run_simulation():
     ndof = 2 * nv
     midNode = nv // 2 + 1
     dt = 0.01
-    RodLength = 0.1
+    RodLength = 1 #0.1 before
     deltaL = RodLength / (nv - 1)
     totalTime = 50
     plotStep = 250
@@ -17,50 +17,58 @@ def run_simulation():
     maximum_iter = 1000
 
     # === Material properties ===
-    r0 = 1e-3
-    Y = 1e9
-    visc = 1000.0
-    rho_metal = 7000
-    rho_gl = 1000
-    rho = rho_metal - rho_gl
+    R0 = 0.013 # outer rod radius
+    r0 = 0.011 # inner rod radius 1e-3
+    Y = 70e9 # elastic modulus
+    # visc = 1000.0 #No viscous force
+    rho_metal = 2700 # density of aluminum
+    # rho_metal = 7000 # No need for these if not under a liquid
+    # rho_gl = 1000
+    # rho = rho_metal - rho_gl
 
-    EI = Y * np.pi * r0**4 / 4
-    EA = Y * np.pi * r0**2
-    tol = EI / RodLength ** 2 * 1e-3
+    EI = Y * np.pi * (R0**4 - r0**4) / 12 # bending stiffness shelled sphere
+    EA = Y * np.pi * (R0**2 - r0**2) # axial stiffness
+    tol = EI / RodLength ** 2 * 1e-3 # tolerance number
 
     # === Geometry setup ===
     nodes = np.zeros((nv, 2))
     for c in range(nv):
-        nodes[c, 0] = c * deltaL
-        nodes[c, 1] = 0.0
+        nodes[c, 0] = c * deltaL #Node x location
+        nodes[c, 1] = 0.0 #Node Y location
 
-    # === Radii ===
-    R = np.full(nv, deltaL / 10)
-    R[midNode - 1] = 0.025
+    # # === Radii ===
+    R = np.full(nv, R0) #Array for all the outer radius
+    r = np.full(nv, r0) #inner radius
+    # R = np.full(nv, deltaL / 10)
+    # R[midNode - 1] = 0.025 #specify radius of middle node
 
     # === Mass and damping matrices ===
-    m = np.zeros(2 * nv)
+    m = np.zeros(2 * nv) #initialize mass matrix
     for k in range(nv):
-        m_node = 4/3 * np.pi * R[k]**3 * rho_metal
+        m_node = (np.pi * (R[k]**2 - r[k]**2) * RodLength * rho_metal) / (nv - 1)
+        # m_node = 4/3 * np.pi * R[k]**3 * rho_metal # rho_metal # used to separate out 
         m[2*k:2*k+2] = m_node
     mMat = np.diag(m)
 
-    C = np.zeros((2*nv, 2*nv))
-    for k in range(nv):
-        C[2*k, 2*k] = 6*np.pi*visc*R[k]
-        C[2*k+1, 2*k+1] = 6*np.pi*visc*R[k]
+    # No Viscosity in this case
+    C=0
+    # C = np.zeros((2*nv, 2*nv))
+    # for k in range(nv):
+    #     C[2*k, 2*k] = 6*np.pi*visc*R[k]
+    #     C[2*k+1, 2*k+1] = 6*np.pi*visc*R[k]
 
-    # === Gravity ===
+    # === Gravity === %TODO: Do I need to remove this??
     g = np.array([0, -9.8])
     W = np.zeros(2 * nv)
     for k in range(nv):
-        W[2*k:2*k+2] = 4/3 * np.pi * R[k]**3 * rho * g
+        W[2*k:2*k+2] = 4/3 * np.pi * R[k]**3 * rho_metal * g
 
     # === Initial Conditions ===
     q0 = nodes.flatten()
     u0 = np.zeros(2 * nv)
     all_DOFs = np.arange(ndof)
-    fixed_index = np.array([0, 1, 2, 3])
+    # fixed_index = np.array([0, 1, 2, 3])
+    fixed_index = np.array([0, 1, 21]) # There is a pin on the first node and a roller on the last node
     free_index = np.setdiff1d(all_DOFs, fixed_index)
 
     Nsteps = round(totalTime / dt)
@@ -88,3 +96,7 @@ def run_simulation():
             plot_rod(q_new, ctime)
 
     plot_results(totalTime, all_pos, all_vel, mid_angle, saveImage)
+
+    #TODO: Work on the P force value 2000N 0.75 away and take away gravity
+
+    # Get it so that 700N on the 75% percent nodes

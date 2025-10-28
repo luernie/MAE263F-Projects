@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def plot_rod(q, ctime):
+    plt.figure()  # This line ensures a new figure is created each time the function is called
+
     x = q[::2]
     y = q[1::2]
     plt.clf()
